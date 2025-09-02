@@ -1,1 +1,2 @@
 yolo/yolov4.weights filter=lfs diff=lfs merge=lfs -text
+yolo/yolov4.weigths filter=lfs diff=lfs merge=lfs -text
