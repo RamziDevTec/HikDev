@@ -157,28 +157,52 @@ def convert_img(file):
     npimg = np.frombuffer(img_bytes, np.uint8) # Wandelt Bildbytes in NumPy-Array um für OpenCV
     return cv2.imdecode(npimg, cv2.IMREAD_COLOR) # Dekodiert es als Bild im OpenCV-Marix Format (bearbeitbar)
 
+# Bild kleiner skalieren für Perfomance
+def resize_image(image, max_width=640, max_height=480):
+    h, w = image.shape[:2]
+    scale = min(max_width / w, max_height / h)
+    if scale < 1.0:  # nur verkleinern, nicht vergrößern
+        new_w = int(w * scale)
+        new_h = int(h * scale)
+        return cv2.resize(image, (new_w, new_h))
+    return image
+
 # Kontrolliert ob der Mittelpunkt einer Person im Einbruchsbereich ist
 def point_in_polygon(point, polygon):
     contour = np.array(polygon, dtype=np.int32)
     return cv2.pointPolygonTest(contour, point, False) >= 0
 
+def load_yolo():
+    global yolo_net, yolo_classes
+    YOLO_CFG = os.path.join(BASE_DIR, YOLO_DIR, "yolov4.cfg")
+    YOLO_WEIGHTS = os.path.join(BASE_DIR, YOLO_DIR, "yolov4.weights")
+    YOLO_CLASSES_FILE = os.path.join(BASE_DIR, YOLO_DIR, "yolov3.txt")
+    
+    yolo_net = cv2.dnn.readNet(YOLO_WEIGHTS, YOLO_CFG)  # Lädt das yolo_netzwerk und die Gewichtung - das Gehirn
+    with open(YOLO_CLASSES_FILE, "r") as f:
+        yolo_classes = [line.strip() for line in f.readlines()]  # Liest alle Klassen in yolov3.txt ein
+    if SHOW_PRINTS:
+        print("===== YOLO wurde geladen =====")
+
 # Bild für YOLO anpassen und analysieren lassen
 def yolo_analysis(image, polygon = None):
-    # YOLO vorbereiten
+    """# YOLO vorbereiten
     YOLO_CFG = os.path.join(BASE_DIR, YOLO_DIR, "yolov4.cfg")
     YOLO_WEIGHTS = os.path.join(BASE_DIR, YOLO_DIR, "yolov4.weights")
     YOLO_CLASSES = os.path.join(BASE_DIR, YOLO_DIR, "yolov3.txt")
     with open(YOLO_CLASSES, "r") as f:
-        classes = [line.strip() for line in f.readlines()] # Liest alle Klassen in yolov3.txt ein
-    net = cv2.dnn.readNet(YOLO_WEIGHTS, YOLO_CFG) # Lädt das Netzwerk und die Gewichtung - das Gehirn
+        yolo_classes = [line.strip() for line in f.readlines()] # Liest alle Klassen in yolov3.txt ein
+    yolo_net = cv2.dnn.readNet(YOLO_WEIGHTS, YOLO_CFG) # Lädt das yolo_netzwerk und die Gewichtung - das Gehirn"""
+
+    global yolo_net, yolo_classes
     
     # Bild anpassen
     height, width = image.shape[:2] # Höhe & Breite des Bildes abrufen
     blob = cv2.dnn.blobFromImage(image, 1/255.0, (416,416), swapRB=True, crop=False) # Konvertiert Bildformat für YOLO (KI)
-    net.setInput(blob) # Leitet das Bild ans YOLO Netzwerk weiter
-    layer_names = net.getLayerNames() # YOLO hat mehrere Schichten. Die Namen werden aufgerufen
-    output_layers = [layer_names[i - 1] for i in net.getUnconnectedOutLayers().flatten()] # Holt Namen der Output-Schichten. flatten für Array-Korrektur
-    outs = net.forward(output_layers) # YOLO beginnt die Analyse
+    yolo_net.setInput(blob) # Leitet das Bild ans YOLO yolo_netzwerk weiter
+    layer_names = yolo_net.getLayerNames() # YOLO hat mehrere Schichten. Die Namen werden aufgerufen
+    output_layers = [layer_names[i - 1] for i in yolo_net.getUnconnectedOutLayers().flatten()] # Holt Namen der Output-Schichten. flatten für Array-Korrektur
+    outs = yolo_net.forward(output_layers) # YOLO beginnt die Analyse
 
     # Daten aus der Analyse vereinfacht speichern
     boxes, confidences = [], [] # Listen für die Rechtecke um die Personen und die Wahrscheinlichkeit
@@ -400,6 +424,7 @@ def alarm_handler():
             if SHOW_PRINTS:
                 print("===== ÜNGÜLTIGES BILD =====\n\n======== POST ENDE ========")
             return "===== ÜNGÜLTIGES BILD =====", 400
+        image = resize_image(image) # Image kleiner skalieren für Perfomance
         height, width = image.shape[:2] #image = mask_polygon(image, polygon)
         polygon = fix_camera_offset(polygon, width, height) # Einbruchsbereich richtig skalieren und positionieren
         person_count, image = yolo_analysis(image, polygon) # Analysiert das Bild und gibt es mit der Personenanzahl raus in diese 2 Variablen
@@ -426,6 +451,7 @@ if __name__ == '__main__':
         print("===== Konfiguraionsdatei nicht gefunden. Es werden die Standartwerte verwendet: =====")
         print_current_config()
     start_del_loop()
+    load_yolo()
     if INVERT_ALARMOUTPUT == True:
         trigger_alarm_output(False)
     elif INVERT_ALARMOUTPUT == False:
