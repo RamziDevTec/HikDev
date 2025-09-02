@@ -1,0 +1,28 @@
+<config>
+    <!-- Zugriff -->
+    <httpIp>0.0.0.0</httpIp> <!-- Wo der HTTP-Server gehostet wird. Normalerweise auf dem eigenen Computer. -->
+    <httpPort>5000</httpPort> <!-- Port. Standard: "5000" -->
+    <onlyCameraAccess>false</onlyCameraAccess> <!-- Erlaubt nur POSTs von der Kamera. -->
+    <cameraIp>0.0.0.0</cameraIp> <!-- IP-Adresse der Kamera. IP der Kamera mit dem SADP-Tool finden. -->
+    <hikvisionLoginUsername>admin</hikvisionLoginUsername> <!-- Benutzername für das Login in der Weboberfläche der Kamera (Hikvision) -->
+    <hikvisionLoginPassword>passwort</hikvisionLoginPassword> <!-- Passwort für das Login in der Weboberfläche der Kamera (Hikvision) -->
+
+    <!-- KI -->
+    <confidenceThreshold>0.7</confidenceThreshold> <!-- Mindestwahrscheinlichkeit für die KI, um Ergebnisse mitzuzählen -->
+    <max_count_to_error>10</max_count_to_error> <!-- Ab wie vielen Personen das Input als Fehler angesehen werden sollte. -->
+
+    <!-- Bilder -->
+    <saveImages>true</saveImages> <!-- Ob die Bilder gespeichert werden sollen -->
+    <saveDurationHours>24</saveDurationHours> <!-- Wie viele Stunden die Bilder gespeichert werden sollen. 0 = unendlich. -->
+    <delIntervalMinutes>5</delIntervalMinutes> <!-- Nach wie vielen Minuten immer der Bilder-Löscher aktiviert werden sollte -->
+
+    <!-- Pfade -->
+    <baseDir>C:\Program Files\HikDev</baseDir> <!-- Pfad zum Hauptordner (ohne Anführungszeichen) -->
+    <imageDir>bilder</imageDir> <!-- Ordner der Bilder -->
+    <yoloDir>yolo</yoloDir> <!-- Ordner v on der KI YOLO -->
+
+    <!-- Entwickler -->
+    <showPrints>true</showPrints> <!-- Zeigt Print-Befehle für besseres Debuggen (Empfohlen) -->
+    <invert_alarmoutput>false</invert_alarmoutput> <!-- Ob das AlarmOutput immer an sein sollte und beim EventTrigger deaktiviert wird -->
+</config>
+
