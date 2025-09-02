@@ -174,9 +174,9 @@ def point_in_polygon(point, polygon):
 
 def load_yolo():
     global yolo_net, yolo_classes
-    YOLO_CFG = os.path.join(BASE_DIR, YOLO_DIR, "yolov4.cfg")
-    YOLO_WEIGHTS = os.path.join(BASE_DIR, YOLO_DIR, "yolov4.weights")
-    YOLO_CLASSES_FILE = os.path.join(BASE_DIR, YOLO_DIR, "yolov3.txt")
+    YOLO_CFG = os.path.join(BASE_DIR, YOLO_DIR, "yolov3.cfg")
+    YOLO_WEIGHTS = os.path.join(BASE_DIR, YOLO_DIR, "yolov3-tiny.weights")
+    YOLO_CLASSES_FILE = os.path.join(BASE_DIR, YOLO_DIR, "coco.names")
     
     yolo_net = cv2.dnn.readNet(YOLO_WEIGHTS, YOLO_CFG)  # Lädt das yolo_netzwerk und die Gewichtung - das Gehirn
     with open(YOLO_CLASSES_FILE, "r") as f:
@@ -187,9 +187,9 @@ def load_yolo():
 # Bild für YOLO anpassen und analysieren lassen
 def yolo_analysis(image, polygon = None):
     """# YOLO vorbereiten
-    YOLO_CFG = os.path.join(BASE_DIR, YOLO_DIR, "yolov4.cfg")
-    YOLO_WEIGHTS = os.path.join(BASE_DIR, YOLO_DIR, "yolov4.weights")
-    YOLO_CLASSES = os.path.join(BASE_DIR, YOLO_DIR, "yolov3.txt")
+    YOLO_CFG = os.path.join(BASE_DIR, YOLO_DIR, "yolov3.cfg")
+    YOLO_WEIGHTS = os.path.join(BASE_DIR, YOLO_DIR, "yolov3-tiny.weights")
+    YOLO_CLASSES = os.path.join(BASE_DIR, YOLO_DIR, "coco.names")
     with open(YOLO_CLASSES, "r") as f:
         yolo_classes = [line.strip() for line in f.readlines()] # Liest alle Klassen in yolov3.txt ein
     yolo_net = cv2.dnn.readNet(YOLO_WEIGHTS, YOLO_CFG) # Lädt das yolo_netzwerk und die Gewichtung - das Gehirn"""
