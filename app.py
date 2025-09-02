@@ -1,4 +1,4 @@
-## IMPORTS ###
+## IMPORTS ##
 from flask import Flask, request, abort
 import cv2
 import numpy as np
