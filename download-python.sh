@@ -1,5 +1,5 @@
 sudo apt update
-sudo apt install -y wget build-essential libssl-dev zlib1g-dev libncurses5-dev libncursesw5-dev libreadline-dev libsqlite3-dev libffi-dev libbz2-dev libjpeg-dev libpng-dev libtiff-dev libsm6 libxext6 libxrender-dev
+sudo apt install -y wget build-essential libssl-dev zlib1g-dev libncurses5-dev libncursesw5-dev libreadline-dev libsqlite3-dev libffi-dev libbz2-dev libjpeg-dev libpng-dev libtiff-dev libsm6 libxext6 libxrender-dev libgl1 libglib2.0-0
 
 # Python 3.10 herunterladen
 wget https://www.python.org/ftp/python/3.10.0/Python-3.10.0.tgz
