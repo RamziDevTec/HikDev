@@ -1,3 +1,7 @@
+## Warnungen von Torch ignorieren ##
+import os
+os.environ["TORCH_CPP_LOG_LEVEL"] = "ERROR"
+
 ## IMPORTS ##
 from flask import Flask, request, abort
 import cv2
@@ -9,7 +13,6 @@ import string
 from datetime import datetime
 import time
 import threading
-import os
 import xml.etree.ElementTree as ET
 import urllib3#
 from ultralytics import YOLO
@@ -410,4 +413,5 @@ if __name__ == '__main__':
     else:
         print("===== Interner Fehler (trigger-start) =====")
     app.run(host=HTTP_IP, port=HTTP_PORT)
+
 
