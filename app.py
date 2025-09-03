@@ -315,13 +315,21 @@ def trigger_alarm_output(trigger:bool):
             print(f"===== AlarmOutput-Fehler: {e} =====")
         return f"===== AlarmOutput-Fehler: {e} ====="
 
+open_door = False
+
 # Ergebnisse
 def result(person_count):
-    if person_count >= 2 and person_count < MAX_COUNT_TO_ERROR:
+    if person_count >= 2 and person_count < MAX_COUNT_TO_ERROR and open_door:
+        if SHOW_PRINTS:
+            print(f"\n===== MEHRERE PERSONEN SIND DURCHGEGANGEN: {person_count} =====")
+        trigger_alarm_output(False)
+        emergency()
+        return f"===== MEHRERE PERSONEN SIND DURCHGEGANGEN: {person_count} =====", 200 
+    elif person_count >= 2 and person_count < MAX_COUNT_TO_ERROR:
         if SHOW_PRINTS:
             print(f"\n===== MEHRERE PERSONEN ERKANNT: {person_count} =====")
         trigger_alarm_output(False)
-        return f"===== MEHRERE PERSONEN ERKANNT: {person_count} =====", 200
+        return f"===== MEHRERE PERSONEN ERKANNT: {person_count} =====", 200 
     elif person_count == 1:
         if SHOW_PRINTS:
             print(f"\n===== Eine Person erkannt =====")
@@ -338,6 +346,10 @@ def result(person_count):
             print(f"\n===== KONTROLLIEREN SIE ZUR SICHERHEIT NACH =====")
         trigger_alarm_output(False)
         return f"===== FEHLSCHLAG ODER {MAX_COUNT_TO_ERROR}+ PERSONEN ERKANNT, KONTROLLIEREN SIE ZUR SICHERHEIT NACH =====", 409
+
+
+def emergency():
+    print("===== ALARMMMMMMMMMMMMMMMMMMMMMMMMMMMMM =====")
 
 ## YOLO MODELL VORBEREITEN ##
 model = YOLO("yolo11s.pt")
