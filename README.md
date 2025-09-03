@@ -217,7 +217,23 @@ app.py ausführen (nach der Kamera-Konfiguration):
  	•	Im Ordner in der CLI: "python3.10 app.py" eingeben.
 
 
+7\. Als Linux Service starten:
 
+ 	•	Im Ordner in der CLI: "bash systemd-service-setup.sh"
+
+ 	•	Es startet damit und aktiviert sich auch immer weider beim booten, neustartet sich auch bei Fehler oder einem Kill.
+
+ 	•	Um den Status zu sehen in der CLI: "sudo systemctl status hikdev"
+
+ 	•	Um den Log zu sehen in der CLI: "journalctl -u hikdev -f", verlassen mit strg + z oder strg + c
+
+ 	•	Um es zu stoppen, deaktivieren und zu löschen:
+
+ 		•	Stoppen in der CLI: "sudo systemctl stop hikdev"
+
+ 		•	Deaktivieren in der CLI: "sudo systemctl disable hikdev"
+
+ 		•	Löschen in der CLI: "sudo rm /etc/systemd/system/hikdev.service"
 
 
 

@@ -11,7 +11,8 @@ import time
 import threading
 import os
 import xml.etree.ElementTree as ET
-import urllib3
+import urllib3#
+from ultralytics import YOLO
 
 # Sicherheitswanung deaktivieren. Dadurch entsteht ein lokales Risiko! Allerdings ist es Kostenlos und ein lokaler Angriff würde eine Verbindung auf das interne LAN benötigen.
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -19,7 +20,6 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 ## APP-INSTANZ ERSTELLEN ##
 app = Flask(__name__)
-
 
 ## KONFIGURATIONSBEREICH ##
 
@@ -158,7 +158,7 @@ def convert_img(file):
     return cv2.imdecode(npimg, cv2.IMREAD_COLOR) # Dekodiert es als Bild im OpenCV-Marix Format (bearbeitbar)
 
 # Bild kleiner skalieren für Perfomance
-def resize_image(image, max_width=640, max_height=480):
+def resize_image(image, max_width=960, max_height=720):
     h, w = image.shape[:2]
     scale = min(max_width / w, max_height / h)
     if scale < 1.0:  # nur verkleinern, nicht vergrößern
@@ -172,7 +172,7 @@ def point_in_polygon(point, polygon):
     contour = np.array(polygon, dtype=np.int32)
     return cv2.pointPolygonTest(contour, point, False) >= 0
 
-def load_yolo():
+""" def load_yolo():
     global yolo_net, yolo_classes
     YOLO_CFG = os.path.join(BASE_DIR, YOLO_DIR, "yolov3.cfg")
     YOLO_WEIGHTS = os.path.join(BASE_DIR, YOLO_DIR, "yolov3-tiny.weights")
@@ -182,18 +182,10 @@ def load_yolo():
     with open(YOLO_CLASSES_FILE, "r") as f:
         yolo_classes = [line.strip() for line in f.readlines()]  # Liest alle Klassen in yolov3.txt ein
     if SHOW_PRINTS:
-        print("===== YOLO wurde geladen =====")
+        print("===== YOLO wurde geladen =====") """
 
 # Bild für YOLO anpassen und analysieren lassen
-def yolo_analysis(image, polygon = None):
-    """# YOLO vorbereiten
-    YOLO_CFG = os.path.join(BASE_DIR, YOLO_DIR, "yolov3.cfg")
-    YOLO_WEIGHTS = os.path.join(BASE_DIR, YOLO_DIR, "yolov3-tiny.weights")
-    YOLO_CLASSES = os.path.join(BASE_DIR, YOLO_DIR, "coco.names")
-    with open(YOLO_CLASSES, "r") as f:
-        yolo_classes = [line.strip() for line in f.readlines()] # Liest alle Klassen in yolov3.txt ein
-    yolo_net = cv2.dnn.readNet(YOLO_WEIGHTS, YOLO_CFG) # Lädt das yolo_netzwerk und die Gewichtung - das Gehirn"""
-
+""" def yolo_analysis(image, polygon = None):
     global yolo_net, yolo_classes
     
     # Bild anpassen
@@ -239,6 +231,28 @@ def yolo_analysis(image, polygon = None):
         cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2) # Zeichnet Box um die Person
         cv2.putText(image, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2) # Zeigt Wahrscheinlichkeitstext
 
+    return person_count, image """
+
+def yolo_analysis(image, polygon=None):
+    global model # dein YOLO11s Modell (oben geladen)
+    # Inferenz mit Ultralytics
+    results = model.predict(source=image, verbose=False)[0]
+
+    person_count = 0
+    for box in results.boxes:
+        cls = int(box.cls[0]) # Klasse (ID) 
+        conf = float(box.conf[0]) # Confidence
+        x1, y1, x2, y2 = box.xyxy[0].cpu().numpy().astype(int)
+        center = (int((x1 + x2) / 2), int((y1 + y2) / 2))
+
+        if cls == 0 and conf > CONFIDENCE_THRESHOLD: # Klasse "Person"
+            if polygon is not None and not point_in_polygon(center, polygon):
+                continue
+            person_count += 1
+            label = f"person: {int(conf * 100)}%"
+            cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            cv2.putText(image, label, (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        
     return person_count, image
 
 # Lösung für die Verschiebung des Einbruchsbereichs
@@ -386,6 +400,8 @@ def result(person_count):
         trigger_alarm_output(False)
         return f"===== FEHLSCHLAG ODER {MAX_COUNT_TO_ERROR}+ PERSONEN ERKANNT, KONTROLLIEREN SIE ZUR SICHERHEIT NACH =====", 409
 
+## YOLO MODELL VORBEREITEN ##
+model = YOLO(os.path.join(BASE_DIR, YOLO_DIR, "yolo11s.pt"))
 
 ## APP ##
 @app.route('/alarm', methods=['POST']) # Bei einem POST an /alarm aktiviert sich alarm()
@@ -451,7 +467,6 @@ if __name__ == '__main__':
         print("===== Konfiguraionsdatei nicht gefunden. Es werden die Standartwerte verwendet: =====")
         print_current_config()
     start_del_loop()
-    load_yolo()
     if INVERT_ALARMOUTPUT == True:
         trigger_alarm_output(False)
     elif INVERT_ALARMOUTPUT == False:
