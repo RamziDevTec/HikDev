@@ -201,6 +201,8 @@ config.xml öffnen und konfigurieren:
 venv-setup.sh ausführen
 
  	•	Im Ordner in der CLI: "bash venv-setup.sh" eingeben. Erstellt eine Python-Umgebung und installiert alle nötigen Abhängigkeiten.
+  •	Falls die Installation abbricht und da irgendwo "No space left on Device" steht, dann:
+ 	    •	Im Ordner in der CLI: "bash no-space.sh", das löst das Problem und erstellt dann auch eine Umgebung -> Kein venv-setup.sh mehr nötig
 
 
 
@@ -293,4 +295,5 @@ HikDev unterstützt kein FTP o.ä., nur HTTP-basierte Verbindungen.
 
 
 Fertig! HikDev ist jetzt einsatzbereit.
+
 
