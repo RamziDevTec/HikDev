@@ -19,7 +19,6 @@
     <!-- Pfade -->
     <baseDir>C:\Program Files\HikDev</baseDir> <!-- Pfad zum Hauptordner (ohne Anführungszeichen) -->
     <imageDir>bilder</imageDir> <!-- Ordner der Bilder -->
-    <yoloDir>yolo</yoloDir> <!-- Ordner v on der KI YOLO -->
 
     <!-- Entwickler -->
     <showPrints>true</showPrints> <!-- Zeigt Print-Befehle für besseres Debuggen (Empfohlen) -->

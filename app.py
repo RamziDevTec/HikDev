@@ -50,7 +50,6 @@ DEL_INTERVAL_MINUTES = 30 # Nach wie vielen Minuten immer der Bilder-Löscher ak
 # Pfade
 BASE_DIR = r"C:\Program Files\HikDev" # Pfad zum Hauptordner (ohne Anführungszeichen)
 IMAGE_DIR = r"bilder" # Ordner der Bilder
-YOLO_DIR = r"yolo" # Ordner von der KI YOLO
 
 # Entwickler
 SHOW_PRINTS = True # Zeigt Print-Befehle für besseres Debuggen (Empfohlen)
@@ -63,7 +62,7 @@ def load_config_from_xml(path):
     global HTTP_IP, HTTP_PORT, ONLY_CAMERA_ACCESS, CAMERA_IP, HIKVISION_LOGIN_USERNAME, HIKVISION_LOGIN_PASSWORD # Zugriff
     global CONFIDENCE_THRESHOLD, MAX_COUNT_TO_ERROR # KI
     global SAVE_IMAGES, SAVE_DURATION_HOURS, DEL_INTERVAL_MINUTES # Bilder
-    global BASE_DIR, IMAGE_DIR, YOLO_DIR # Pfade
+    global BASE_DIR, IMAGE_DIR # Pfade
     global SHOW_PRINTS, INVERT_ALARMOUTPUT # Entwickler
 
     try:
@@ -88,7 +87,6 @@ def load_config_from_xml(path):
 
         BASE_DIR = gt("baseDir")
         IMAGE_DIR = gt("imageDir")
-        YOLO_DIR = gt("yoloDir")
 
         SHOW_PRINTS = gt("showPrints").lower() == "true"
         INVERT_ALARMOUTPUT = gt("invert_alarmoutput").lower() == "true"
@@ -112,7 +110,6 @@ def print_current_config():
     print(f"DEL_INTERVAL_MINUTES: {DEL_INTERVAL_MINUTES}")
     print(f"BASE_DIR: {BASE_DIR}")
     print(f"IMAGE_DIR: {IMAGE_DIR}")
-    print(f"YOLO_DIR: {YOLO_DIR}")
     print(f"SHOW_PRINTS: {SHOW_PRINTS}")
     print("===================================\n")
 
@@ -171,67 +168,6 @@ def resize_image(image, max_width=960, max_height=720):
 def point_in_polygon(point, polygon):
     contour = np.array(polygon, dtype=np.int32)
     return cv2.pointPolygonTest(contour, point, False) >= 0
-
-""" def load_yolo():
-    global yolo_net, yolo_classes
-    YOLO_CFG = os.path.join(BASE_DIR, YOLO_DIR, "yolov3.cfg")
-    YOLO_WEIGHTS = os.path.join(BASE_DIR, YOLO_DIR, "yolov3-tiny.weights")
-    YOLO_CLASSES_FILE = os.path.join(BASE_DIR, YOLO_DIR, "coco.names")
-    
-    yolo_net = cv2.dnn.readNet(YOLO_WEIGHTS, YOLO_CFG)  # Lädt das yolo_netzwerk und die Gewichtung - das Gehirn
-    with open(YOLO_CLASSES_FILE, "r") as f:
-        yolo_classes = [line.strip() for line in f.readlines()]  # Liest alle Klassen in yolov3.txt ein
-    if SHOW_PRINTS:
-        print("===== YOLO wurde geladen =====") """
-
-# Bild für YOLO anpassen und analysieren lassen
-""" def yolo_analysis(image, polygon = None):
-    global yolo_net, yolo_classes
-    
-    # Bild anpassen
-    height, width = image.shape[:2] # Höhe & Breite des Bildes abrufen
-    blob = cv2.dnn.blobFromImage(image, 1/255.0, (416,416), swapRB=True, crop=False) # Konvertiert Bildformat für YOLO (KI)
-    yolo_net.setInput(blob) # Leitet das Bild ans YOLO yolo_netzwerk weiter
-    layer_names = yolo_net.getLayerNames() # YOLO hat mehrere Schichten. Die Namen werden aufgerufen
-    output_layers = [layer_names[i - 1] for i in yolo_net.getUnconnectedOutLayers().flatten()] # Holt Namen der Output-Schichten. flatten für Array-Korrektur
-    outs = yolo_net.forward(output_layers) # YOLO beginnt die Analyse
-
-    # Daten aus der Analyse vereinfacht speichern
-    boxes, confidences = [], [] # Listen für die Rechtecke um die Personen und die Wahrscheinlichkeit
-    for out in outs: # Für alle Analysen
-        for detection in out: # Für alle Erkennungen in allen Analysen
-            scores = detection[5:] # Die ersten 5 Werte des Arrays (detection): [x, y, w, h, confidence]
-            confidence = scores[0] # Nimmt sich die Wahrscheinlichkeit raus 
-            if confidence > CONFIDENCE_THRESHOLD: # Wenn die Wahrscheinlichkeit über den Mindestwert ist, berechne:
-                center_x = int(detection[0] * width) # Zentrierte X-Psotion in Pixel
-                center_y = int(detection[1] * height)# Zentrierte X-Psotion in Pixel
-                w = int(detection[2] * width) # Breite in Pixel
-                h = int(detection[3] * height) # Höhe in Pixel
-                x = int(center_x - w / 2) # X-Position in Pixel (für OpenCV)
-                y = int(center_y - h / 2) # Y-Position in Pixel (für OpenCV)
-                boxes.append([x, y, w, h]) # Liste "boxes" bekommt die Koordinaten und Größen (für OpenCV)
-                confidences.append(float(confidence)) # Liste "confidences" bekommt die Wahrscheinlichkeiten
-
-    # Verdopplungen vermeiden
-    indices = cv2.dnn.NMSBoxes(boxes, confidences, CONFIDENCE_THRESHOLD, 0.4)
-
-    # UI-Elemente erstellen
-    person_count = 0 # Personen Anzahl
-    for i in indices: # Für alle eindeutig erkannten Personen
-        i = i[0] if isinstance(i, (list, tuple, np.ndarray)) else i # Sichergehen, dass alle indices kein list, tuple ode rnp.ndarray ist
-        x, y, w, h = boxes[i] # Übernimmt die durch boxes übergebenen Koordinaten und Größen
-        center = (x + w//2, y + h//2) # Berechnet den mittelpunkt der Person
-        
-        if polygon is not None: # Wenn ein Polygon für den Einbruchsbereich existiert:
-            if not point_in_polygon(center, polygon): # Ignoriert Personen außerhalb des Einbruchsbereich
-                continue
-
-        person_count += 1 # Zählt die Person
-        label = f"person: {int(confidences[i]*100)}%" # Erzeugt Wahrscheinlichkeitstext zb: person: 88%
-        cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2) # Zeichnet Box um die Person
-        cv2.putText(image, label, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2) # Zeigt Wahrscheinlichkeitstext
-
-    return person_count, image """
 
 def yolo_analysis(image, polygon=None):
     global model # dein YOLO11s Modell (oben geladen)
@@ -401,7 +337,7 @@ def result(person_count):
         return f"===== FEHLSCHLAG ODER {MAX_COUNT_TO_ERROR}+ PERSONEN ERKANNT, KONTROLLIEREN SIE ZUR SICHERHEIT NACH =====", 409
 
 ## YOLO MODELL VORBEREITEN ##
-model = YOLO(os.path.join(BASE_DIR, YOLO_DIR, "yolo11s.pt"))
+model = YOLO("yolo11s.pt")
 
 ## APP ##
 @app.route('/alarm', methods=['POST']) # Bei einem POST an /alarm aktiviert sich alarm()
