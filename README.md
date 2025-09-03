@@ -60,7 +60,21 @@ config.xml öffnen und konfigurieren. Wichtige Parameter:
 
 
 
-4\. Es gibt ein Problem mit einer Bibliothek namens "PyInstaller" für Python 3.10 bei der Erstellung einer EXE-Datei. Lösung:
+
+
+4\. Python-Umgebung erstellen:
+
+venv-setup.bat ausführen
+
+ 	•	Erstellt eine Python-Umgebung und installiert alle nötigen Abhängigkeiten. Könnte ein paar Minuten dauern.
+
+ 	•	Jetzt kann die Python-Datei "app.py" auf der gewünschten Plattform ausgeführt werden.
+
+
+
+  
+
+5\. Es gibt ein Problem mit einer Bibliothek namens "PyInstaller" für Python 3.10 bei der Erstellung einer EXE-Datei. Lösung:
 
  	1.	Windows + R → %appdata% eingeben → AppData
 
@@ -82,15 +96,6 @@ yield (i, op, arg)
 
 Dabei unbedingt auf unsichtbare Leerzeichen achten! Diese werden z.B. in VSCode gezeigt. Sonst kann keine Umgebung erstellt werden.
 
-
-
-5\. Python-Umgebung erstellen:
-
-venv-setup.bat ausführen
-
- 	•	Erstellt eine Python-Umgebung und installiert alle nötigen Abhängigkeiten.
-
- 	•	Jetzt kann die Python-Datei "app.py" auf der gewünschten Plattform ausgeführt werden.
 
 
 
@@ -200,7 +205,7 @@ config.xml öffnen und konfigurieren:
 
 venv-setup.sh ausführen
 
- 	•	Im Ordner in der CLI: "bash venv-setup.sh" eingeben. Erstellt eine Python-Umgebung und installiert alle nötigen Abhängigkeiten.
+ 	•	Im Ordner in der CLI: "bash venv-setup.sh" eingeben. Erstellt eine Python-Umgebung und installiert alle nötigen Abhängigkeiten. Könnte ein paar Minuten dauern.
   •	Falls die Installation abbricht und da irgendwo "No space left on Device" steht, dann:
  	    •	Im Ordner in der CLI: "bash no-space.sh", das löst das Problem und erstellt dann auch eine Umgebung -> Kein venv-setup.sh mehr nötig
 
@@ -295,5 +300,6 @@ HikDev unterstützt kein FTP o.ä., nur HTTP-basierte Verbindungen.
 
 
 Fertig! HikDev ist jetzt einsatzbereit.
+
 
 
