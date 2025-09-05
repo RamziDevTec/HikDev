@@ -3,4 +3,5 @@ opencv-python-headless
 numpy
 pyinstaller
 requests
+pyserial
 ultralytics

@@ -12,9 +12,10 @@ from collections import defaultdict
 import string
 from datetime import datetime
 import time
+import serial
 import threading
 import xml.etree.ElementTree as ET
-import urllib3#
+import urllib3
 from ultralytics import YOLO
 
 # Sicherheitswanung deaktivieren. Dadurch entsteht ein lokales Risiko! Allerdings ist es Kostenlos und ein lokaler Angriff würde eine Verbindung auf das interne LAN benötigen.
@@ -259,6 +260,47 @@ def start_del_loop():
     thread = threading.Thread(target=loop, daemon=True) # Definiert den Thread zum aktivieren der inneren Funktion
     thread.start() # Startet den Thread und somit die Funktion
 
+
+# Gibt dem Gate ein Befehl als Argument gesetzt auf True. Mögliche Befehle: alarm_off, alarm_on, door_close, door_open, door_keep_open. Beispiel: gate(alarm_on=True) => Aktiviert Alarm
+def gate(alarm_off = False, alarm_on = False,  door_close = False, door_open = False, door_keep_open = False):
+    global ser
+    # Variablen auf Standard zurücksetzen
+    SOI     = 0xAA # Start of Information, immer AA
+    RES     = 0x00 # Reserved, Standard 00
+    ADR_S   = 0x01 # Source Address, Standard PC/Software = 01
+    CID1    = 0x00 # Control Character 1, Standard 00
+    CID2    = 0x00 # Control Character 2, Standard 00
+    ADR_T   = 0x00 # Target Address, Standard Gate-Adresse 01
+    DLC     = 0x08 # Data Length, Standard 8 Byte
+    DATA0   = 0x00
+    DATA1   = 0x00
+    DATA2   = 0x00
+    DATA3   = 0x00
+    DATA4   = 0x00
+    DATA5   = 0x00
+    DATA6   = 0x00
+    DATA7   = 0x00
+    CHK     = 0x10 # Prüfsumme, wird automatisch berechnet
+
+    # Packet jenach Aktion konfigurieren
+    if alarm_off: CID1 = 0x02, DATA0 = 0x02
+    elif alarm_on: CID1 = 0x02, DATA0 = 0x02, DATA1 = 0x01
+    elif door_close: CID1 = 0x02, DATA1 = 0x02
+    elif door_open: CID1 = 0x02
+    elif door_keep_open: CID1 = 0x02, DATA1 = 0x01
+    else:
+        if SHOW_PRINTS:
+            print("===== KEINE AKTION FÜR DAS GATE ERKANNT =====")
+        return "===== KEINE AKTION FÜR DAS GATE ERKANNT ====="
+
+    # Packet vollständigen
+    packet = [SOI, RES, ADR_S, CID1, CID2, ADR_T, DLC,
+          DATA0, DATA1, DATA2, DATA3, DATA4, DATA5, DATA6, DATA7, CHK]
+    packet[15] = sum(packet[1:15]) & 0xFF # CHK berechnen
+
+    # Packet senden und Verbindung trennen
+    ser.write(packet)
+
 # Schalte Strom an dem Alarmausgang
 def trigger_alarm_output(trigger:bool):
     try:
@@ -323,7 +365,9 @@ def result(person_count):
         if SHOW_PRINTS:
             print(f"\n===== MEHRERE PERSONEN SIND DURCHGEGANGEN: {person_count} =====")
         trigger_alarm_output(False)
-        emergency()
+        gate(alarm_on=True)
+        time.sleep(5)
+        gate(alarm_off=True)
         return f"===== MEHRERE PERSONEN SIND DURCHGEGANGEN: {person_count} =====", 200 
     elif person_count >= 2 and person_count < MAX_COUNT_TO_ERROR:
         if SHOW_PRINTS:
@@ -348,11 +392,18 @@ def result(person_count):
         return f"===== FEHLSCHLAG ODER {MAX_COUNT_TO_ERROR}+ PERSONEN ERKANNT, KONTROLLIEREN SIE ZUR SICHERHEIT NACH =====", 409
 
 
-def emergency():
-    print("===== ALARMMMMMMMMMMMMMMMMMMMMMMMMMMMMM =====")
-
 ## YOLO MODELL VORBEREITEN ##
 model = YOLO("yolo11s.pt")
+
+## RS485-PORT ÖFFNEN ##
+ser = serial.Serial(
+    port='COM4',          # euer Adapter
+    baudrate=9600,        # falls nicht korrekt: ausprobieren 19200, 38400 etc.
+    parity=serial.PARITY_NONE,
+    stopbits=serial.STOPBITS_ONE,
+    bytesize=serial.EIGHTBITS,
+    timeout=1
+)
 
 ## APP ##
 @app.route('/alarm', methods=['POST']) # Bei einem POST an /alarm aktiviert sich alarm()
