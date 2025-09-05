@@ -283,11 +283,21 @@ def gate(alarm_off = False, alarm_on = False,  door_close = False, door_open = F
     CHK     = 0x10 # Prüfsumme, wird automatisch berechnet
 
     # Packet jenach Aktion konfigurieren
-    if alarm_off: CID1 = 0x02, DATA0 = 0x02
-    elif alarm_on: CID1 = 0x02, DATA0 = 0x02, DATA1 = 0x01
-    elif door_close: CID1 = 0x02, DATA1 = 0x02
-    elif door_open: CID1 = 0x02
-    elif door_keep_open: CID1 = 0x02, DATA1 = 0x01
+    if alarm_off:
+        CID1 = 0x02
+        DATA0 = 0x02
+    elif alarm_on:
+        CID1 = 0x02
+        DATA0 = 0x02
+        DATA1 = 0x01
+    elif door_close:
+        CID1 = 0x02
+        DATA1 = 0x02
+    elif door_open: 
+        CID1 = 0x02
+    elif door_keep_open:
+        CID1 = 0x02
+        DATA1 = 0x01
     else:
         if SHOW_PRINTS:
             print("===== KEINE AKTION FÜR DAS GATE ERKANNT =====")
