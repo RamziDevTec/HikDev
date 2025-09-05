@@ -311,6 +311,8 @@ def gate(alarm_off = False, alarm_on = False,  door_close = False, door_open = F
     # Packet senden und Verbindung trennen
     ser.write(packet)
 
+open_door = False # ÄNDERN, DAS IST NUR EIN PLATZHALTER
+
 # Schalte Strom an dem Alarmausgang
 def trigger_alarm_output(trigger:bool):
     try:
@@ -366,8 +368,6 @@ def trigger_alarm_output(trigger:bool):
         if SHOW_PRINTS:
             print(f"===== AlarmOutput-Fehler: {e} =====")
         return f"===== AlarmOutput-Fehler: {e} ====="
-
-open_door = False
 
 # Ergebnisse
 def result(person_count):
