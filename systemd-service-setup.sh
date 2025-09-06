@@ -6,17 +6,33 @@ HIKDEV_DIR="/home/devtec/HikDev"
 PYTHON_BIN="$HIKDEV_DIR/.venv/bin/python3.10"
 SERVICE_NAME="hikdev"
 
-echo "=== HikDev systemd-Service Setup ==="
+echo "[INFO] HikDev systemd-Service Setup vorbereiten..."
+
+# Wrapper für sudo
+run_cmd() {
+    if command -v sudo >/dev/null 2>&1; then
+        sudo "$@"
+    else
+        "$@"
+    fi
+}
+
+# Prüfen, ob systemd läuft
+if ! pidof systemd >/dev/null; then
+    echo "[FEHLER] Dieses System verwendet kein systemd!"
+    echo "[HINWEIS] Bitte manuell einen Service für Ihr Init-System (z. B. SysVinit) anlegen."
+    exit 1
+fi
 
 # Prüfen ob Service-Datei existiert
 if [ -f "/etc/systemd/system/$SERVICE_NAME.service" ]; then
-    echo "Service-Datei existiert bereits. Wird überschrieben..."
-    sudo rm -f /etc/systemd/system/$SERVICE_NAME.service
+    echo "[INFO] Service-Datei existiert bereits. Wird überschrieben..."
+    run_cmd rm -f /etc/systemd/system/$SERVICE_NAME.service
 fi
 
 # Service-Datei erstellen
-echo "Erstelle systemd-Service-Datei..."
-sudo tee /etc/systemd/system/$SERVICE_NAME.service > /dev/null <<EOL
+echo "[INFO] Erstelle systemd-Service-Datei..."
+run_cmd tee /etc/systemd/system/$SERVICE_NAME.service > /dev/null <<EOL
 [Unit]
 Description=HikDev Hintergrundservice
 After=network.target
@@ -34,20 +50,20 @@ WantedBy=multi-user.target
 EOL
 
 # systemd neu laden
-echo "systemd daemon neu laden..."
-sudo systemctl daemon-reload
+echo "[INFO] systemd daemon neu laden..."
+run_cmd systemctl daemon-reload
 
 # Service starten
-echo "Starte Service..."
-sudo systemctl start $SERVICE_NAME
+echo "[INFO] Starte Service..."
+run_cmd systemctl start $SERVICE_NAME
 
 # Service aktivieren
-echo "Aktiviere Service beim Boot..."
-sudo systemctl enable $SERVICE_NAME
+echo "[INFO] Aktiviere Service beim Boot..."
+run_cmd systemctl enable $SERVICE_NAME
 
 # Status anzeigen
-echo "Service Status:"
-sudo systemctl status $SERVICE_NAME --no-pager
+echo "[INFO] Service Status:"
+run_cmd systemctl status $SERVICE_NAME --no-pager
 
-echo "===== Setup abgeschlossen ====="
-echo "Logs live anzeigen mit: journalctl -u $SERVICE_NAME -f"
+echo "[INFO] Setup abgeschlossen!"
+echo "[HINWEIS] Logs live anzeigen mit: journalctl -u $SERVICE_NAME -f"
