@@ -1,20 +1,22 @@
-HikDev - Kameraüberwachung mit intelligentem Personenzähler für smarte individuelle Aktionen
+HikDev - Kameraüberwachung mit intelligentem Personenzähler als Erweiterung eines Gates.
 
 
 
-Ein Python-basiertes Tool zur Personenerkennung mit der Hikvision-Kamera (Modell: DS-2CD234G2-ISU/SL). Erkennt Personen live und löst abhängig von der Anzahl gezielt eine Aktion aus. Vordefiniert ist ein Alarmausgang für extern verbundene Geräte wie Lichter, Sirenen etc.
+Ein Python-basiertes Tool zur Personenerkennung mit der Hikvision-Kamera (Modell: DS-2CD234G2-ISU/SL). Erkennt Personen live und löst abhängig von der Anzahl gezielt eine Aktion aus. Grundsätzlich fungiert HikDev als Erweiterung eines Gates für Personallose Fitness-Studios. So kann man das sogenannte "Tailgating" (Unbefugtes miteintreten mehrerer Personen durch die Türöffnung eines Chipes/Codes) verhindern. 
 
 
 
 Features
 
- 	•	KI-basierter Personenzähler
+ 	•	KI-basierter Personenzähler (Yolo v11)
 
- 	•	Selbstgeschriebene Funktionen können als Aktionen genutzt werden
+ 	•	Kompitabel mit Hikvision Kameras
+  
+ 	•	Kompitabel mit Gates
 
  	•	Anleitung für die Konfiguration über die Weboberfläche der Kamera
 
- 	•	Ausführbar als Python-Datei, .exe-Datei oder Windows-Dienst
+ 	•	Optimiert für Windows als Python-Skript, EXE-Anwendung und Dienst, aber auch für Linux wie Ubuntu oder Debian ebenso als Python-Skript oder systemd-Service
 
 
 
@@ -300,6 +302,7 @@ HikDev unterstützt kein FTP o.ä., nur HTTP-basierte Verbindungen.
 
 
 Fertig! HikDev ist jetzt einsatzbereit.
+
 
 
 
