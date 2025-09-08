@@ -270,7 +270,7 @@ def gate(alarm_off = False, alarm_on = False,  door_close = False, door_open = F
     ADR_S   = 0x01 # Source Address, Standard PC/Software = 01
     CID1    = 0x00 # Control Character 1, Standard 00
     CID2    = 0x00 # Control Character 2, Standard 00
-    ADR_T   = 0x00 # Target Address, Standard Gate-Adresse 01
+    ADR_T   = 0x02 # Target Address, Standard Gate-Adresse 01
     DLC     = 0x08 # Data Length, Standard 8 Byte
     DATA0   = 0x00
     DATA1   = 0x00
@@ -299,8 +299,9 @@ def gate(alarm_off = False, alarm_on = False,  door_close = False, door_open = F
         CID1 = 0x02
         DATA1 = 0x01
     elif door_status:
-        CID1 = 0x12
-        DLC = 0x00
+        CID1 = 0x02
+        CID2 = 0x00
+        DATA0 = 0xFF
     else:
         if SHOW_PRINTS:
             print("===== KEINE AKTION FÜR DAS GATE ERKANNT =====")
@@ -320,9 +321,10 @@ def door_detector():
     if response:
         data = list(response)
         print("Antwort: ", response.hex(" "))
-        status = data[7]
+        status = data[8]
         print(f"Gate-Status-Code: {status:02X}")
-        if status == 3 or status == 6 or status == 7 or status == 8:
+        # Door closed = 0x02 ; Door open = 0x01
+        if status == 1:
             return True
         else:
             return False
@@ -506,5 +508,6 @@ if __name__ == '__main__':
     else:
         print("===== Interner Fehler (trigger-start) =====")
     app.run(host=HTTP_IP, port=HTTP_PORT)
+
 
 
