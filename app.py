@@ -262,7 +262,7 @@ def start_del_loop():
 
 
 # Gibt dem Gate ein Befehl als Argument gesetzt auf True. Mögliche Befehle: alarm_off, alarm_on, door_close, door_open, door_keep_open. Beispiel: gate(alarm_on=True) => Aktiviert Alarm
-def gate(alarm_off = False, alarm_on = False,  door_close = False, door_open = False, door_keep_open = False):
+def gate(alarm_off = False, alarm_on = False,  door_close = False, door_open = False, door_keep_open = False, door_status = False):
     global ser
     # Variablen auf Standard zurücksetzen
     SOI     = 0xAA # Start of Information, immer AA
@@ -298,6 +298,9 @@ def gate(alarm_off = False, alarm_on = False,  door_close = False, door_open = F
     elif door_keep_open:
         CID1 = 0x02
         DATA1 = 0x01
+    elif door_status:
+        CID1 = 0x12
+        DLC = 0x00
     else:
         if SHOW_PRINTS:
             print("===== KEINE AKTION FÜR DAS GATE ERKANNT =====")
@@ -311,7 +314,22 @@ def gate(alarm_off = False, alarm_on = False,  door_close = False, door_open = F
     # Packet senden und Verbindung trennen
     ser.write(packet)
 
-open_door = False # ÄNDERN, DAS IST NUR EIN PLATZHALTER
+def door_detector():
+    gate(door_status=True)
+    response = ser.read(16)
+    if response:
+        data = list(response)
+        print("Antwort: ", response.hex(" "))
+        status = data[7]
+        print(f"Gate-Status-Code: {status:02X}")
+        if status == 3 or status == 6 or status == 7 or status == 8:
+            return True
+        else:
+            return False
+    else:
+        print("Keine Antwort")
+        return False
+
 
 # Schalte Strom an dem Alarmausgang
 def trigger_alarm_output(trigger:bool):
@@ -371,12 +389,14 @@ def trigger_alarm_output(trigger:bool):
 
 # Ergebnisse
 def result(person_count):
-    if person_count >= 2 and person_count < MAX_COUNT_TO_ERROR and open_door:
+    if person_count >= 2 and person_count < MAX_COUNT_TO_ERROR and door_detector():
         if SHOW_PRINTS:
             print(f"\n===== MEHRERE PERSONEN SIND DURCHGEGANGEN: {person_count} =====")
         trigger_alarm_output(False)
         gate(alarm_on=True)
+        #gate(door_open=True)
         time.sleep(5)
+        #gate(door_close=True)
         gate(alarm_off=True)
         return f"===== MEHRERE PERSONEN SIND DURCHGEGANGEN: {person_count} =====", 200 
     elif person_count >= 2 and person_count < MAX_COUNT_TO_ERROR:
