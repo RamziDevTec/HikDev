@@ -71,6 +71,12 @@ venv-setup.bat ausführen
  	•	Erstellt eine Python-Umgebung und installiert alle nötigen Abhängigkeiten. Könnte ein paar Minuten dauern.
 
  	•	Jetzt kann die Python-Datei "app.py" auf der gewünschten Plattform ausgeführt werden.
+  
+  •	Stelle sicher, dass die venv (Python-Umgebung) aktiviert ist. Das ist zu erkennen, wenn in der CLI vor alles andere ein "(.venv)" steht. Falls nicht:
+
+ 		•	Im Terminal: ".\.venv\Scripts\Activate.ps1"
+   
+ 		•	Jetzt wieder Skript starten.
 
 
 
@@ -302,6 +308,7 @@ HikDev unterstützt kein FTP o.ä., nur HTTP-basierte Verbindungen.
 
 
 Fertig! HikDev ist jetzt einsatzbereit.
+
 
 
 
