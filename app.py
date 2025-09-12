@@ -321,10 +321,10 @@ def door_detector():
     if response:
         data = list(response)
         print("Antwort: ", response.hex(" "))
-        status = data[8]
+        status = data[7]
         print(f"Gate-Status-Code: {status:02X}")
         # Door closed = 0x02 ; Door open = 0x01
-        if status == 1:
+        if status == 3 or status == 4 or status == 5 or status == 6 or status == 7 or status == 8 or status == 9 or status == 11 or status == 12 or status == 13 or status == 14 or status == 15 or status == 16:
             return True
         else:
             return False
@@ -395,11 +395,13 @@ def result(person_count):
         if SHOW_PRINTS:
             print(f"\n===== MEHRERE PERSONEN SIND DURCHGEGANGEN: {person_count} =====")
         trigger_alarm_output(False)
-        gate(alarm_on=True)
-        #gate(door_open=True)
         time.sleep(5)
-        #gate(door_close=True)
+        gate(alarm_on=True)
+        time.sleep(5)
         gate(alarm_off=True)
+        time.sleep(5)
+        gate(door_open=True)
+        gate(door_close=True)
         return f"===== MEHRERE PERSONEN SIND DURCHGEGANGEN: {person_count} =====", 200 
     elif person_count >= 2 and person_count < MAX_COUNT_TO_ERROR:
         if SHOW_PRINTS:
