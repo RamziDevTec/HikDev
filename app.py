@@ -262,7 +262,7 @@ def start_del_loop():
 
 
 # Gibt dem Gate ein Befehl als Argument gesetzt auf True. Mögliche Befehle: alarm_off, alarm_on, door_close, door_open, door_keep_open. Beispiel: gate(alarm_on=True) => Aktiviert Alarm
-def gate(alarm_off = False, alarm_on = False,  door_close = False, door_open = False, door_keep_open = False, door_status = False):
+def gate(alarm_off = False, alarm_on = False,  door_close = False, door_open = False, door_keep_open = False, door_status = False, check_mode = False, set_mode = False, gate_mode = 1):
     global ser
     # Variablen auf Standard zurücksetzen
     SOI     = 0xAA # Start of Information, immer AA
@@ -302,6 +302,13 @@ def gate(alarm_off = False, alarm_on = False,  door_close = False, door_open = F
         CID1 = 0x02
         CID2 = 0x00
         DATA0 = 0xFF
+    elif check_mode:
+        CID1 = 0x02
+        CID2 = 0x06
+    elif set_mode:
+        CID1 = 0x02
+        CID2 = 0x06
+        DATA0 = gate_mode
     else:
         if SHOW_PRINTS:
             print("===== KEINE AKTION FÜR DAS GATE ERKANNT =====")
@@ -314,6 +321,7 @@ def gate(alarm_off = False, alarm_on = False,  door_close = False, door_open = F
 
     # Packet senden und Verbindung trennen
     ser.write(packet)
+    print(ser.read(16))
 
 def door_detector():
     gate(door_status=True)
@@ -391,17 +399,16 @@ def trigger_alarm_output(trigger:bool):
 
 # Ergebnisse
 def result(person_count):
-    if person_count >= 2 and person_count < MAX_COUNT_TO_ERROR and door_detector():
+    if person_count == 1 and door_detector():#>= 2 and person_count < MAX_COUNT_TO_ERROR and door_detector():
         if SHOW_PRINTS:
             print(f"\n===== MEHRERE PERSONEN SIND DURCHGEGANGEN: {person_count} =====")
         trigger_alarm_output(False)
-        time.sleep(5)
+        time.sleep(3)
         gate(alarm_on=True)
         time.sleep(5)
         gate(alarm_off=True)
-        time.sleep(5)
-        gate(door_open=True)
-        gate(door_close=True)
+        time.sleep(1)
+        gate(door_status=True)
         return f"===== MEHRERE PERSONEN SIND DURCHGEGANGEN: {person_count} =====", 200 
     elif person_count >= 2 and person_count < MAX_COUNT_TO_ERROR:
         if SHOW_PRINTS:
@@ -497,6 +504,7 @@ def alarm_handler():
 
 # App starten
 if __name__ == '__main__':
+    gate(check_mode=True)
     if os.path.exists("config.xml"):
         load_config_from_xml("config.xml")
     else:
