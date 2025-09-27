@@ -260,9 +260,8 @@ def start_del_loop():
     thread = threading.Thread(target=loop, daemon=True) # Definiert den Thread zum aktivieren der inneren Funktion
     thread.start() # Startet den Thread und somit die Funktion
 
-
-# Gibt dem Gate ein Befehl als Argument gesetzt auf True. Mögliche Befehle: alarm_off, alarm_on, door_close, door_open, door_keep_open. Beispiel: gate(alarm_on=True) => Aktiviert Alarm
-def gate(alarm_off = False, alarm_on = False,  door_close = False, door_open = False, door_keep_open = False, door_status = False):
+# Gibt dem Gate ein Befehl als Argument gesetzt auf True. Mögliche Befehle: alarm_off, alarm_on, close, open, keep_open. Beispiel: gate(alarm_on=True) => Aktiviert Alarm
+def gate(alarm_off = False, alarm_on = False,  close = False, open = False, keep_open = False, door_status = False, get_mode = False, set_mode = False, mode = 1):
     global ser
     # Variablen auf Standard zurücksetzen
     SOI     = 0xAA # Start of Information, immer AA
@@ -290,18 +289,25 @@ def gate(alarm_off = False, alarm_on = False,  door_close = False, door_open = F
         CID1 = 0x02
         DATA0 = 0x02
         DATA1 = 0x01
-    elif door_close:
+    elif close:
         CID1 = 0x02
         DATA1 = 0x02
-    elif door_open: 
+    elif open: 
         CID1 = 0x02
-    elif door_keep_open:
+    elif keep_open:
         CID1 = 0x02
         DATA1 = 0x01
     elif door_status:
         CID1 = 0x02
         CID2 = 0x00
         DATA0 = 0xFF
+    elif get_mode:
+        CID1 = 0x02
+        CID2 = 0x06
+    elif set_mode:
+        CID1 = 0x02
+        CID2 = 0x06
+        DATA0 = mode
     else:
         if SHOW_PRINTS:
             print("===== KEINE AKTION FÜR DAS GATE ERKANNT =====")
@@ -315,23 +321,34 @@ def gate(alarm_off = False, alarm_on = False,  door_close = False, door_open = F
     # Packet senden und Verbindung trennen
     ser.write(packet)
 
-def door_detector():
+# Überprüft, ob das Gate offen ist
+def gate_detector():
     gate(door_status=True)
     response = ser.read(16)
     if response:
         data = list(response)
-        print("Antwort: ", response.hex(" "))
-        status = data[8]
-        print(f"Gate-Status-Code: {status:02X}")
-        # Door closed = 0x02 ; Door open = 0x01
-        if status == 1:
+        #print("Antwort: ", response.hex(" "))
+        #print(f"Gate-Status-Code: {status:02X}")
+        status = data[7]
+        if status == 3 or status == 4 or status == 5 or status == 6 or status == 7 or status == 8 or status == 9 or status == 10 or status == 11 or status == 12 or status == 13 or status == 14 or status == 15 or status == 16:
             return True
         else:
             return False
     else:
-        print("Keine Antwort")
+        if SHOW_PRINTS:
+            print("Keine Antwort")
         return False
 
+# Alarm für delayed Tailgating
+def delayed_tailgating_alarm():
+    time.sleep(3)
+    gate(alarm_on=True)
+    time.sleep(5)
+    gate(alarm_off=True)
+    time.sleep(.3)
+    gate(set_mode=True, mode=10)
+    time.sleep(.3)
+    gate(set_mode=True, mode=1)
 
 # Schalte Strom an dem Alarmausgang
 def trigger_alarm_output(trigger:bool):
@@ -391,15 +408,11 @@ def trigger_alarm_output(trigger:bool):
 
 # Ergebnisse
 def result(person_count):
-    if person_count >= 2 and person_count < MAX_COUNT_TO_ERROR and door_detector():
+    if person_count >= 2 and person_count < MAX_COUNT_TO_ERROR and gate_detector():
         if SHOW_PRINTS:
             print(f"\n===== MEHRERE PERSONEN SIND DURCHGEGANGEN: {person_count} =====")
         trigger_alarm_output(False)
-        gate(alarm_on=True)
-        #gate(door_open=True)
-        time.sleep(5)
-        #gate(door_close=True)
-        gate(alarm_off=True)
+        delayed_tailgating_alarm()
         return f"===== MEHRERE PERSONEN SIND DURCHGEGANGEN: {person_count} =====", 200 
     elif person_count >= 2 and person_count < MAX_COUNT_TO_ERROR:
         if SHOW_PRINTS:
@@ -495,6 +508,7 @@ def alarm_handler():
 
 # App starten
 if __name__ == '__main__':
+    gate(set_mode=True, mode=1)
     if os.path.exists("config.xml"):
         load_config_from_xml("config.xml")
     else:
@@ -508,6 +522,7 @@ if __name__ == '__main__':
     else:
         print("===== Interner Fehler (trigger-start) =====")
     app.run(host=HTTP_IP, port=HTTP_PORT)
+
 
 
 
