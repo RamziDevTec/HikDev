@@ -17,6 +17,9 @@ run_cmd() {
     fi
 }
 
+# Benutzer für die Schnittstelle berechtigen
+run_cmd() usermod -aG dialout user
+
 # Prüfen, ob systemd läuft
 if ! pidof systemd >/dev/null; then
     echo "[FEHLER] Dieses System verwendet kein systemd!"
