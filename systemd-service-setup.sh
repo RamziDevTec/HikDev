@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Variablen anpassen
-USER_NAME="devtec"
-HIKDEV_DIR="/home/devtec/HikDev"
+USER_NAME="user"
+HIKDEV_DIR="/home/$USER_NAME/HikDev"
 PYTHON_BIN="$HIKDEV_DIR/.venv/bin/python3.10"
 SERVICE_NAME="hikdev"
 
