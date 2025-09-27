@@ -234,7 +234,10 @@ app.py ausführen (nach der Kamera-Konfiguration):
 
 7\. Als Linux Service starten:
 
- 	•	Im Ordner in der CLI: "bash systemd-service-setup.sh"
+ 	•	Variablen anpassen mit: Im Ordner in der CLI: "nano systemd-service-setup.sh"
+    •	Hier USER_NAME und HIKDEV_DIR anpassen. Auch SERVICE_NAME bei Bedarf ändern.
+
+  •	Im Ordner in der CLI: "bash systemd-service-setup.sh"
 
  	•	Es startet damit und aktiviert sich auch immer weider beim booten, neustartet sich auch bei Fehler oder einem Kill.
 
@@ -308,6 +311,7 @@ HikDev unterstützt kein FTP o.ä., nur HTTP-basierte Verbindungen.
 
 
 Fertig! HikDev ist jetzt einsatzbereit.
+
 
 
 
