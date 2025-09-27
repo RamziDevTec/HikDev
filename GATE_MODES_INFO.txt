@@ -1,0 +1,33 @@
+Mode 1 (Standard):
+Set Mode 1:    \xaa\x00\x02\x12\x06\x01\x08\x01\x00\x00\x00\x00\x00\x00\x00$
+Check Mode:    \xaa\x00\x02\x12\x06\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x1d
+
+- Gesperrt. Kann mit einem Check-in oder out geöffnet werden
+- Alarm aktiviert sich ohne Check
+- Schließt und sperrt sich danach wieder
+- Blaue LEDs, blinkt rot ohne Check, kurz grün nach Check
+
+Mode 2:
+Set Mode 2:    \xaa\x00\x02\x12\x06\x01\x08\x02\x00\x00\x00\x00\x00\x00\x00%
+Check Mode:    \xaa\x00\x02\x12\x06\x01\x01\x02\x00\x00\x00\x00\x00\x00\x00\x1e
+
+- Ungesperrt. Kann durch reinlaufen geöffnet werden
+- Alarm komplett aus
+- Schließt sich danach wieder (ungesperrt)
+- Grüne LEDs, kurz Blau bei Türöffnung
+
+Mode 3:
+Set Mode 3:    \xaa\x00\x02\x12\x06\x01\x08\x03\x00\x00\x00\x00\x00\x00\x00&
+Check Mode:    \xaa\x00\x02\x12\x06\x01\x01\x03\x00\x00\x00\x00\x00\x00\x00\x1f
+
+- Gesperrt. Kann nicht geöffnet werden
+- Alarm aktiviert sich ohne Check
+- Ist immer geschlossen
+- Rote LEDs, blinkt rot beim betreten
+
+
+...
+...
+...
+
+Bis Mode 13.
