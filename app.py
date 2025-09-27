@@ -40,6 +40,7 @@ ONLY_CAMERA_ACCESS = False # Erlaubt nur POSTs von der Kamera.
 CAMERA_IP = "0.0.0.0" # IP-Adresse der Kamera. IP der Kamera mit dem SADP-Tool finden.
 HIKVISION_LOGIN_USERNAME = "admin" # Benutzername für das Login in der Weboberfläche der Kamera (Hikvision)
 HIKVISION_LOGIN_PASSWORD = "password" # Passwort für das Login in der Weboberfläche der Kamera (Hikvision)
+RS485_INTERFACE = "COM3" # Schnittstelle, an der RS485 angeschlossen ist. Ungefähre Standards: COM3 (Windows), /dev/ttyUSB0 (Linux)
 
 
 # KI
@@ -63,7 +64,7 @@ INVERT_ALARMOUTPUT = False # Schaltet das Alarmausgang immer an und deaktviert e
 # Konfigurationsfunktion mit config.xml
 def load_config_from_xml(path):
     # Holt alle Variablen
-    global HTTP_IP, HTTP_PORT, ONLY_CAMERA_ACCESS, CAMERA_IP, HIKVISION_LOGIN_USERNAME, HIKVISION_LOGIN_PASSWORD # Zugriff
+    global HTTP_IP, HTTP_PORT, ONLY_CAMERA_ACCESS, CAMERA_IP, HIKVISION_LOGIN_USERNAME, HIKVISION_LOGIN_PASSWORD, RS485_INTERFACE # Zugriff
     global CONFIDENCE_THRESHOLD, MAX_COUNT_TO_ERROR # KI
     global SAVE_IMAGES, SAVE_DURATION_HOURS, DEL_INTERVAL_MINUTES # Bilder
     global BASE_DIR, IMAGE_DIR # Pfade
@@ -81,6 +82,7 @@ def load_config_from_xml(path):
         CAMERA_IP = gt("cameraIp")
         HIKVISION_LOGIN_USERNAME = gt("hikvisionLoginUsername")
         HIKVISION_LOGIN_PASSWORD = gt("hikvisionLoginPassword")
+        RS485_INTERFACE = gt("rs485Interface")
 
         CONFIDENCE_THRESHOLD = float(gt("confidenceThreshold"))
         MAX_COUNT_TO_ERROR = int(gt("max_count_to_error"))
@@ -339,16 +341,16 @@ def gate_detector():
             print("Keine Antwort")
         return False
 
-# Alarm für delayed Tailgating
+# Alarm für delayed Tailgating 
 def delayed_tailgating_alarm():
     time.sleep(3)
     gate(alarm_on=True)
     time.sleep(5)
     gate(alarm_off=True)
     time.sleep(.3)
-    gate(set_mode=True, mode=10)
+    gate(set_mode=True, mode=10) # löscht das rote LED-blinken aus 
     time.sleep(.3)
-    gate(set_mode=True, mode=1)
+    gate(set_mode=True, mode=1) # Kehrt in den Standard-Mode zurück
 
 # Schalte Strom an dem Alarmausgang
 def trigger_alarm_output(trigger:bool):
@@ -440,16 +442,6 @@ def result(person_count):
 ## YOLO MODELL VORBEREITEN ##
 model = YOLO("yolo11s.pt")
 
-## RS485-PORT ÖFFNEN ##
-ser = serial.Serial(
-    port='COM4',          # euer Adapter
-    baudrate=9600,        # falls nicht korrekt: ausprobieren 19200, 38400 etc.
-    parity=serial.PARITY_NONE,
-    stopbits=serial.STOPBITS_ONE,
-    bytesize=serial.EIGHTBITS,
-    timeout=1
-)
-
 ## APP ##
 @app.route('/alarm', methods=['POST']) # Bei einem POST an /alarm aktiviert sich alarm()
 def alarm_handler():
@@ -508,21 +500,31 @@ def alarm_handler():
 
 # App starten
 if __name__ == '__main__':
-    gate(set_mode=True, mode=1)
     if os.path.exists("config.xml"):
         load_config_from_xml("config.xml")
     else:
         print("===== Konfiguraionsdatei nicht gefunden. Es werden die Standartwerte verwendet: =====")
         print_current_config()
+    
+    ## RS485-PORT ÖFFNEN ##
+    ser = serial.Serial(
+        port=RS485_INTERFACE,
+        baudrate=9600,
+        parity=serial.PARITY_NONE,
+        stopbits=serial.STOPBITS_ONE,
+        bytesize=serial.EIGHTBITS,
+        timeout=1
+    )
+
+    gate(set_mode=True, mode=1)
+
     start_del_loop()
+
     if INVERT_ALARMOUTPUT == True:
         trigger_alarm_output(False)
     elif INVERT_ALARMOUTPUT == False:
         trigger_alarm_output(False)
     else:
         print("===== Interner Fehler (trigger-start) =====")
+
     app.run(host=HTTP_IP, port=HTTP_PORT)
-
-
-
-
