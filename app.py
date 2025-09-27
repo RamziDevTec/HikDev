@@ -263,7 +263,7 @@ def start_del_loop():
     thread.start() # Startet den Thread und somit die Funktion
 
 # Gibt dem Gate ein Befehl als Argument gesetzt auf True. Mögliche Befehle: alarm_off, alarm_on, close, open, keep_open. Beispiel: gate(alarm_on=True) => Aktiviert Alarm
-def gate(alarm_off = False, alarm_on = False,  close = False, open = False, keep_open = False, door_status = False, get_mode = False, set_mode = False, mode = 1):
+def gate(alarm_off = False, alarm_on = False,  close = False, open = False, keep_open = False, get_status = False, get_mode = False, set_mode = False, mode = 1):
     global ser
     # Variablen auf Standard zurücksetzen
     SOI     = 0xAA # Start of Information, immer AA
@@ -299,7 +299,7 @@ def gate(alarm_off = False, alarm_on = False,  close = False, open = False, keep
     elif keep_open:
         CID1 = 0x02
         DATA1 = 0x01
-    elif door_status:
+    elif get_status:
         CID1 = 0x02
         CID2 = 0x00
         DATA0 = 0xFF
@@ -323,9 +323,23 @@ def gate(alarm_off = False, alarm_on = False,  close = False, open = False, keep
     # Packet senden und Verbindung trennen
     ser.write(packet)
 
+    # Gibt Mode als Zahl zurück, falls danach gefragt wurde
+    if get_mode:
+        response = ser.read(16)
+        if response:
+            data = list(response)
+            return data[7]
+        else:
+            return None
+    
+    # Gibt Status zurück, falls danach gefragt wurde
+    if door_status:
+        response = ser.read(16)
+        return response
+
 # Überprüft, ob das Gate offen ist
 def gate_detector():
-    gate(door_status=True)
+    gate(get_status=True)
     response = ser.read(16)
     if response:
         data = list(response)
@@ -351,6 +365,23 @@ def delayed_tailgating_alarm():
     gate(set_mode=True, mode=10) # löscht das rote LED-blinken aus 
     time.sleep(.3)
     gate(set_mode=True, mode=1) # Kehrt in den Standard-Mode zurück
+
+# LED und Mode Steuerung #
+# Bei time = 0 bleiben die LEDs bzw. Modes im dem Zustand. Siehe GATE_MODES_INFO.txt für mehr Infos.
+# LEDs werden rot. (Mode 3, sperrt sich für diese Zeit komplett)
+def red_led(time=.3):
+    gate(set_mode=True, mode=3)
+    if time != 0:
+        time.sleep(time)
+        gate(set_mode=True, mode=1)
+
+# LEDs werden grün (Mode 2, entsperrt sich für diese Zeit komplett)
+def green_led(time=.3):
+    gate(set_mode=True, mode=2)
+    if time != 0:
+        time.sleep(time)
+        gate(close=True)
+        gate(set_mode=True, mode=1)
 
 # Schalte Strom an dem Alarmausgang
 def trigger_alarm_output(trigger:bool):
@@ -420,16 +451,21 @@ def result(person_count):
         if SHOW_PRINTS:
             print(f"\n===== MEHRERE PERSONEN ERKANNT: {person_count} =====")
         trigger_alarm_output(False)
+        red_led(0)
         return f"===== MEHRERE PERSONEN ERKANNT: {person_count} =====", 200 
     elif person_count == 1:
         if SHOW_PRINTS:
             print(f"\n===== Eine Person erkannt =====")
         trigger_alarm_output(True)
+        if gate(get_mode=True) == 3:
+            gate(set_mode=True)
         return f"===== Eine Person erkannt =====", 200
     elif person_count == 0:
         if SHOW_PRINTS:
             print(f"\n===== Keine Personen erkannt =====")
         trigger_alarm_output(False)
+        if gate(get_mode=True) == 3:
+            gate(set_mode=True)
         return f"===== Keine Personen erkannt =====", 200
     else:
         if SHOW_PRINTS:
@@ -528,3 +564,4 @@ if __name__ == '__main__':
         print("===== Interner Fehler (trigger-start) =====")
 
     app.run(host=HTTP_IP, port=HTTP_PORT)
+
