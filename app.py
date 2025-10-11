@@ -264,7 +264,7 @@ def start_del_loop():
     thread.start() # Startet den Thread und somit die Funktion
 
 # Gibt dem Gate ein Befehl als Argument gesetzt auf True. Mögliche Befehle: alarm_off, alarm_on, close, open, keep_open. Beispiel: gate(alarm_on=True) => Aktiviert Alarm
-def gate(alarm_off = False, alarm_on = False,  close = False, open = False, keep_open = False, get_status = False, get_mode = False, set_mode = False, mode = 1):
+def gate(alarm_off = False, alarm_on = False,  close = False, open = False, keep_open = False, get_status = False, detect = False, get_mode = False, set_mode = False, mode = 1):
     global ser
     # Variablen auf Standard zurücksetzen
     SOI     = 0xAA # Start of Information, immer AA
@@ -272,7 +272,7 @@ def gate(alarm_off = False, alarm_on = False,  close = False, open = False, keep
     ADR_S   = 0x01 # Source Address, Standard PC/Software = 01
     CID1    = 0x00 # Control Character 1, Standard 00
     CID2    = 0x00 # Control Character 2, Standard 00
-    ADR_T   = 0x02 # Target Address, Standard Gate-Adresse 01
+    ADR_T   = 0x02 # Target Address, Standard Gate-Adresse = 02
     DLC     = 0x08 # Data Length, Standard 8 Byte
     DATA0   = 0x00
     DATA1   = 0x00
@@ -300,7 +300,7 @@ def gate(alarm_off = False, alarm_on = False,  close = False, open = False, keep
     elif keep_open:
         CID1 = 0x02
         DATA1 = 0x01
-    elif get_status:
+    elif get_status or detect:
         CID1 = 0x02
         CID2 = 0x00
         DATA0 = 0xFF
@@ -340,20 +340,22 @@ def gate(alarm_off = False, alarm_on = False,  close = False, open = False, keep
 
 # Überprüft, ob das Gate offen ist
 def gate_detector():
-    gate(get_status=True)
+    gate(detect=True)
     response = ser.read(16)
     if response:
         data = list(response)
         #print("Antwort: ", response.hex(" "))
         #print(f"Gate-Status-Code: {status:02X}")
         status = data[7]
+        if SHOW_PRINTS:
+            print("DATA[7]: ", status)
         if status == 3 or status == 4 or status == 5 or status == 6 or status == 7 or status == 8 or status == 9 or status == 10 or status == 11 or status == 12 or status == 13 or status == 14 or status == 15 or status == 16:
             return True
         else:
             return False
     else:
         if SHOW_PRINTS:
-            print("Keine Antwort")
+            print("===== KEINE ANTWORT VOM GATE =====")
         return False
 
 # Alarm für delayed Tailgating 
@@ -367,22 +369,30 @@ def delayed_tailgating_alarm():
     time.sleep(.3)
     gate(set_mode=True, mode=1) # Kehrt in den Standard-Mode zurück
 
-# LED und Mode Steuerung #
-# Bei time = 0 bleiben die LEDs bzw. Modes im dem Zustand. Siehe GATE_MODES_INFO.txt für mehr Infos.
+# LED und Mode Steuerung (ÄNDERT AUCH DEN MODE!!!) #
+# Bei s = 0 bleiben die LEDs bzw. Modes im dem Zustand. Siehe GATE_MODES_INFO.txt für mehr Infos.
 # LEDs werden rot. (Mode 3, sperrt sich für diese Zeit komplett)
-def red_led(time=.3):
+def red_led(s=.3):
     gate(set_mode=True, mode=3)
-    if time != 0:
-        time.sleep(time)
+    if s != 0:
+        time.sleep(s)
         gate(set_mode=True, mode=1)
 
 # LEDs werden grün (Mode 2, entsperrt sich für diese Zeit komplett)
-def green_led(time=.3):
+def green_led(s=.3):
     gate(set_mode=True, mode=2)
-    if time != 0:
-        time.sleep(time)
+    if s != 0:
+        time.sleep(s)
         gate(close=True)
         gate(set_mode=True, mode=1)
+
+# Alarm Steuerung #
+# Bei s = 0 bleibt der Alarm an.
+def alarm(s=.3):
+    gate(alarm_on=True)
+    if s != 0:
+        time.sleep(s)
+        gate(alarm_off=True)
 
 # Schalte Strom an dem Alarmausgang
 def trigger_alarm_output(trigger:bool):
@@ -440,39 +450,54 @@ def trigger_alarm_output(trigger:bool):
             print(f"===== AlarmOutput-Fehler: {e} =====")
         return f"===== AlarmOutput-Fehler: {e} ====="
 
+# Aufgrund von Antwortverzögerungen vom Gate und der Kamera werden folgende vars gebraucht
+last_gate_open = False # Ob das Gate zuletzt offen war
+gate_open_time = 0 # Wann das Gate zuletzt offen war
+
 # Ergebnisse
 def result(person_count):
-    if person_count >= 2 and person_count < MAX_COUNT_TO_ERROR and gate_detector():
+    global last_gate_open, gate_open_time
+    current_gate_open = gate_detector() # Gate offen oder geschlossen merken
+
+    if not last_gate_open and current_gate_open: # Falls Gate zuletzt geschlossen und jetzt offen
+        gate_open_time = time.time() # Öffnungszeitpunkt merken
+
+    if person_count == 1 and current_gate_open and (time.time() - gate_open_time < 4): # Falls Gate offen und weniger als 5 Sekunden her  #person_count >= 2 and person_count < MAX_COUNT_TO_ERROR and gate_detector():
         if SHOW_PRINTS:
             print(f"\n===== MEHRERE PERSONEN SIND DURCHGEGANGEN: {person_count} =====")
         trigger_alarm_output(False)
         delayed_tailgating_alarm()
+        last_gate_open = current_gate_open
         return f"===== MEHRERE PERSONEN SIND DURCHGEGANGEN: {person_count} =====", 200 
     elif person_count >= 2 and person_count < MAX_COUNT_TO_ERROR:
         if SHOW_PRINTS:
             print(f"\n===== MEHRERE PERSONEN ERKANNT: {person_count} =====")
         trigger_alarm_output(False)
         red_led(0)
+        last_gate_open = current_gate_open
         return f"===== MEHRERE PERSONEN ERKANNT: {person_count} =====", 200 
     elif person_count == 1:
         if SHOW_PRINTS:
             print(f"\n===== Eine Person erkannt =====")
         trigger_alarm_output(True)
-        if gate(get_mode=True) == 3:
-            gate(set_mode=True)
+        """ if gate(get_mode=True) == 3:
+            gate(set_mode=True) """
+        last_gate_open = current_gate_open
         return f"===== Eine Person erkannt =====", 200
     elif person_count == 0:
         if SHOW_PRINTS:
             print(f"\n===== Keine Personen erkannt =====")
         trigger_alarm_output(False)
-        if gate(get_mode=True) == 3:
-            gate(set_mode=True)
+        """ if gate(get_mode=True) == 3:
+            gate(set_mode=True) """
+        last_gate_open = current_gate_open
         return f"===== Keine Personen erkannt =====", 200
     else:
         if SHOW_PRINTS:
             print(f"\n===== FEHLSCHLAG ODER {MAX_COUNT_TO_ERROR}+ PERSONEN ERKANNT =====")
             print(f"\n===== KONTROLLIEREN SIE ZUR SICHERHEIT NACH =====")
         trigger_alarm_output(False)
+        last_gate_open = current_gate_open
         return f"===== FEHLSCHLAG ODER {MAX_COUNT_TO_ERROR}+ PERSONEN ERKANNT, KONTROLLIEREN SIE ZUR SICHERHEIT NACH =====", 409
 
 
@@ -553,7 +578,7 @@ if __name__ == '__main__':
         timeout=1
     )
 
-    gate(set_mode=True, mode=1)
+    gate(set_mode=True)
 
     start_del_loop()
 
@@ -565,3 +590,4 @@ if __name__ == '__main__':
         print("===== Interner Fehler (trigger-start) =====")
 
     app.run(host=HTTP_IP, port=HTTP_PORT)
+
