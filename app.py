@@ -110,6 +110,7 @@ def print_current_config():
     print(f"HTTP_PORT: {HTTP_PORT}")
     print(f"ONLY_CAMERA_ACCESS: {ONLY_CAMERA_ACCESS}")
     print(f"CAMERA_IP: {CAMERA_IP}")
+    print(f"CAMERA_IP: {RS485_INTERFACE}")
     print(f"CONFIDENCE_THRESHOLD: {CONFIDENCE_THRESHOLD}")
     print(f"SAVE_IMAGES: {SAVE_IMAGES}")
     print(f"SAVE_DURATION_HOURS: {SAVE_DURATION_HOURS}")
@@ -333,7 +334,7 @@ def gate(alarm_off = False, alarm_on = False,  close = False, open = False, keep
             return None
     
     # Gibt Status zurück, falls danach gefragt wurde
-    if door_status:
+    if get_status:
         response = ser.read(16)
         return response
 
@@ -564,4 +565,3 @@ if __name__ == '__main__':
         print("===== Interner Fehler (trigger-start) =====")
 
     app.run(host=HTTP_IP, port=HTTP_PORT)
-
