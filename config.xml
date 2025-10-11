@@ -6,6 +6,7 @@
     <cameraIp>0.0.0.0</cameraIp> <!-- IP-Adresse der Kamera. IP der Kamera mit dem SADP-Tool finden. -->
     <hikvisionLoginUsername>admin</hikvisionLoginUsername> <!-- Benutzername für das Login in der Weboberfläche der Kamera (Hikvision) -->
     <hikvisionLoginPassword>passwort</hikvisionLoginPassword> <!-- Passwort für das Login in der Weboberfläche der Kamera (Hikvision) -->
+    <rs485Interface>COM4</rs485Interface>  <!-- Schnittstelle, an der RS485 angeschlossen ist -->
 
     <!-- KI -->
     <confidenceThreshold>0.7</confidenceThreshold> <!-- Mindestwahrscheinlichkeit für die KI, um Ergebnisse mitzuzählen -->
@@ -24,4 +25,5 @@
     <showPrints>true</showPrints> <!-- Zeigt Print-Befehle für besseres Debuggen (Empfohlen) -->
     <invert_alarmoutput>false</invert_alarmoutput> <!-- Ob das AlarmOutput immer an sein sollte und beim EventTrigger deaktiviert wird -->
 </config>
+
 
