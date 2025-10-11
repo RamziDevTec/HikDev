@@ -462,7 +462,7 @@ def result(person_count):
     if not last_gate_open and current_gate_open: # Falls Gate zuletzt geschlossen und jetzt offen
         gate_open_time = time.time() # Öffnungszeitpunkt merken
 
-    if person_count == 1 and current_gate_open and (time.time() - gate_open_time < 4): # Falls Gate offen und weniger als 5 Sekunden her  #person_count >= 2 and person_count < MAX_COUNT_TO_ERROR and gate_detector():
+    if person_count >= 2 and person_count < MAX_COUNT_TO_ERROR and current_gate_open and (time.time() - gate_open_time < 5): # Falls Gate offen und weniger als 5 Sekunden her
         if SHOW_PRINTS:
             print(f"\n===== MEHRERE PERSONEN SIND DURCHGEGANGEN: {person_count} =====")
         trigger_alarm_output(False)
@@ -473,23 +473,19 @@ def result(person_count):
         if SHOW_PRINTS:
             print(f"\n===== MEHRERE PERSONEN ERKANNT: {person_count} =====")
         trigger_alarm_output(False)
-        red_led(0)
+        alarm()
         last_gate_open = current_gate_open
         return f"===== MEHRERE PERSONEN ERKANNT: {person_count} =====", 200 
     elif person_count == 1:
         if SHOW_PRINTS:
             print(f"\n===== Eine Person erkannt =====")
         trigger_alarm_output(True)
-        """ if gate(get_mode=True) == 3:
-            gate(set_mode=True) """
         last_gate_open = current_gate_open
         return f"===== Eine Person erkannt =====", 200
     elif person_count == 0:
         if SHOW_PRINTS:
             print(f"\n===== Keine Personen erkannt =====")
         trigger_alarm_output(False)
-        """ if gate(get_mode=True) == 3:
-            gate(set_mode=True) """
         last_gate_open = current_gate_open
         return f"===== Keine Personen erkannt =====", 200
     else:
@@ -590,4 +586,5 @@ if __name__ == '__main__':
         print("===== Interner Fehler (trigger-start) =====")
 
     app.run(host=HTTP_IP, port=HTTP_PORT)
+
 
